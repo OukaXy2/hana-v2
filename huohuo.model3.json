@@ -15,8 +15,7 @@
 			{ "Name": "cry", "File": "cry.exp3.json" },
 			{ "Name": "baozhen", "File": "baozhen.exp3.json" },
 			{ "Name": "qizi1", "File": "qizi1.exp3.json" },
-			{ "Name": "qizi2", "File": "qizi2.exp3.json" },
-			{ "Name": "white_eyes", "File": "white eyes.exp3.json" }
+			{ "Name": "qizi2", "File": "qizi2.exp3.json" }
 		],
 		"Motions": {
 			"Idle": [
@@ -40,16 +39,12 @@
 		{
 			"Target": "Parameter",
 			"Name": "EyeBlink",
-			"Ids": []
+			"Ids": ["ParamEyeLOpen", "ParamEyeROpen"]
 		},
 		{
 			"Target": "Parameter",
 			"Name": "LipSync",
-			"Ids": []
+			"Ids": ["ParamMouthOpenY"]
 		}
-	],
-	"HitAreas": [
-		{ "Id": "Head", "Name": "Head" },
-		{ "Id": "Body", "Name": "Body" }
 	]
 }

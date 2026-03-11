@@ -3,17 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test Live2D</title>
+<title>Test Live2D - Huohuo</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-  #status { color: white; font-family: sans-serif; font-size: 14px; margin-bottom: 12px; padding: 0 16px; text-align: center; }
+  body { background: #1a1a2e; overflow: hidden; }
+  #status {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    color: white; font-family: sans-serif; font-size: 13px;
+    background: rgba(255,255,255,0.1); padding: 6px 16px;
+    border-radius: 99px; z-index: 10; white-space: nowrap;
+  }
+  #hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.5); font-family: sans-serif; font-size: 12px;
+    text-align: center; z-index: 10;
+  }
   canvas { display: block; }
 </style>
 </head>
 <body>
 
 <div id="status">⏳ Memuat model...</div>
+<div id="hint">Tap atas = gerak kepala · Tap bawah = animasi badan</div>
 <canvas id="canvas"></canvas>
 
 <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
@@ -23,50 +34,62 @@
 <script>
 const STATUS = document.getElementById('status');
 const W = window.innerWidth;
-const H = window.innerHeight - 60;
+const H = window.innerHeight;
 
 const app = new PIXI.Application({
   view: document.getElementById('canvas'),
-  width: W,
-  height: H,
+  width: W, height: H,
   backgroundColor: 0x1a1a2e,
 });
 
 const MODEL_URL = 'https://oukaxy2.github.io/hana-v2/huohuo.model3.json';
+let model = null;
 
 async function load() {
   try {
-    STATUS.textContent = '⏳ Memuat model Huohuo...';
+    STATUS.textContent = '⏳ Memuat Huohuo...';
     const Live2DModel = PIXI.live2d.Live2DModel;
-    const model = await Live2DModel.from(MODEL_URL);
-
+    model = await Live2DModel.from(MODEL_URL);
     app.stage.addChild(model);
 
-    const scale = Math.min(W / model.width, H / model.height) * 0.9;
+    const scale = Math.min(W / model.width, H / model.height) * 0.92;
     model.scale.set(scale);
     model.x = (W - model.width) / 2;
     model.y = (H - model.height) / 2;
 
-    STATUS.textContent = '✅ Tap kepala atau badan!';
+    STATUS.textContent = '✅ Huohuo siap!';
+    setTimeout(() => STATUS.style.opacity = '0', 2000);
 
-    // Idle motion otomatis
+    // Auto idle
     model.motion('Idle');
-
-    // Tap interaksi
-    model.on('hit', (hitAreas) => {
-      console.log('Hit:', hitAreas);
-      if (hitAreas.includes('Head')) {
-        model.motion('TapHead');
-      } else if (hitAreas.includes('Body')) {
-        model.motion('TapBody');
-      }
-    });
 
   } catch(e) {
     STATUS.textContent = '❌ Gagal: ' + e.message;
     console.error(e);
   }
 }
+
+// Tap handler — atas = kepala, bawah = badan
+document.addEventListener('click', (e) => {
+  if (!model) return;
+  const midY = H / 2;
+  if (e.clientY < midY) {
+    model.motion('TapHead');
+  } else {
+    model.motion('TapBody');
+  }
+});
+
+document.addEventListener('touchend', (e) => {
+  if (!model) return;
+  const touch = e.changedTouches[0];
+  const midY = H / 2;
+  if (touch.clientY < midY) {
+    model.motion('TapHead');
+  } else {
+    model.motion('TapBody');
+  }
+});
 
 window.addEventListener('load', () => setTimeout(load, 300));
 </script>
