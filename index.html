@@ -12,6 +12,7 @@
     color: white; font-family: sans-serif; font-size: 13px;
     background: rgba(255,255,255,0.1); padding: 6px 16px;
     border-radius: 99px; z-index: 10; white-space: nowrap;
+    transition: opacity 0.5s;
   }
   #hint {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -44,6 +45,7 @@ const app = new PIXI.Application({
 
 const MODEL_URL = 'https://oukaxy2.github.io/hana-v2/huohuo.model3.json';
 let model = null;
+let isPlaying = false;
 
 async function load() {
   try {
@@ -69,25 +71,33 @@ async function load() {
   }
 }
 
-// Tap handler — atas = kepala, bawah = badan
+async function triggerMotion(type) {
+  if (!model || isPlaying) return;
+  isPlaying = true;
+  await model.motion(type);
+  // tunggu motion selesai baru boleh trigger lagi
+  setTimeout(() => {
+    isPlaying = false;
+    model.motion('Idle');
+  }, 3000);
+}
+
 document.addEventListener('click', (e) => {
   if (!model) return;
-  const midY = H / 2;
-  if (e.clientY < midY) {
-    model.motion('TapHead');
+  if (e.clientY < H / 2) {
+    triggerMotion('TapHead');
   } else {
-    model.motion('TapBody');
+    triggerMotion('TapBody');
   }
 });
 
 document.addEventListener('touchend', (e) => {
   if (!model) return;
   const touch = e.changedTouches[0];
-  const midY = H / 2;
-  if (touch.clientY < midY) {
-    model.motion('TapHead');
+  if (touch.clientY < H / 2) {
+    triggerMotion('TapHead');
   } else {
-    model.motion('TapBody');
+    triggerMotion('TapBody');
   }
 });
 
