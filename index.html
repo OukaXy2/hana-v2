@@ -47,10 +47,19 @@ async function load() {
     model.x = (W - model.width) / 2;
     model.y = (H - model.height) / 2;
 
-    STATUS.textContent = '✅ Berhasil! Tap karakter untuk animasi!';
+    STATUS.textContent = '✅ Tap kepala atau badan!';
 
+    // Idle motion otomatis
+    model.motion('Idle');
+
+    // Tap interaksi
     model.on('hit', (hitAreas) => {
-      model.motion('tap_body');
+      console.log('Hit:', hitAreas);
+      if (hitAreas.includes('Head')) {
+        model.motion('TapHead');
+      } else if (hitAreas.includes('Body')) {
+        model.motion('TapBody');
+      }
     });
 
   } catch(e) {
