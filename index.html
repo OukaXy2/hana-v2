@@ -26,7 +26,6 @@
     pointer-events: none;
   }
 
-  /* CANVAS */
   #canvas {
     position: fixed;
     left: 50%; transform: translateX(-50%);
@@ -35,7 +34,6 @@
     pointer-events: none;
   }
 
-  /* SPEECH BUBBLE */
   #speech-bubble {
     position: fixed;
     z-index: 20;
@@ -71,7 +69,6 @@
     z-index: 1;
   }
 
-  /* CHAT PANEL */
   #chat-panel {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -103,9 +100,7 @@
     width: 8px; height: 8px; background: var(--teal);
     border-radius: 50%; animation: pulse 2s infinite;
   }
-  @keyframes pulse {
-    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
-  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
   #chat-header span { font-size: 13px; color: var(--text-soft); font-weight: 600; }
 
   #messages {
@@ -180,7 +175,6 @@
   #send-btn:active { transform: scale(0.92); }
   #send-btn svg { width: 18px; height: 18px; fill: #0f1a14; }
 
-  /* LOADING */
   #loading {
     position: fixed; inset: 0; z-index: 50;
     display: flex; flex-direction: column;
@@ -230,8 +224,8 @@
 <script>
 const MODEL_URL = 'https://oukaxy2.github.io/hana-v2/huohuo.model3.json';
 
-// ── GANTI DENGAN API KEY KAMU ──
-const CLAUDE_API_KEY = 'sk-ant-GANTI_DENGAN_API_KEY_KAMU';
+// ── GANTI DENGAN URL WORKER KAMU ──
+const WORKER_URL = 'https://round-wind-a3ce.mywisnu238.workers.dev/';
 
 const loadingEl  = document.getElementById('loading');
 const bubble     = document.getElementById('speech-bubble');
@@ -258,7 +252,6 @@ let model = null;
 let isPlaying = false;
 let bubbleTimer = null;
 
-// ── SPEECH BUBBLE ──
 function showBubble(text, ms = 4000) {
   bubble.textContent = text;
   const rect = canvasEl.getBoundingClientRect();
@@ -269,7 +262,6 @@ function showBubble(text, ms = 4000) {
   bubbleTimer = setTimeout(() => bubble.classList.remove('visible'), ms);
 }
 
-// ── MOTION ──
 async function playMotion(name) {
   if (!model || isPlaying) return;
   isPlaying = true;
@@ -280,7 +272,6 @@ async function playMotion(name) {
   }, 3500);
 }
 
-// ── CHAT ──
 function addBubble(text, role) {
   const div = document.createElement('div');
   div.className = 'bubble ' + role;
@@ -297,7 +288,6 @@ function addTyping() {
   return div;
 }
 
-// ── CLAUDE API ──
 const SYSTEM = `Kamu adalah Huohuo, karakter dari Honkai Star Rail — seorang dukun muda yang canggung, mudah panik, tapi sangat tulus dan perhatian.
 Kamu berbicara dalam Bahasa Indonesia dengan gaya yang sedikit gugup tapi hangat.
 Jawaban singkat maksimal 3 kalimat. Sesekali pakai emoji tapi tidak berlebihan.
@@ -305,7 +295,6 @@ Kalau ditanya sesuatu yang susah, kamu sedikit panik tapi tetap berusaha menjawa
 
 const history = [];
 
-// detect emotion from reply
 function detectEmotion(text) {
   const t = text.toLowerCase();
   if (t.includes('maaf') || t.includes('sedih') || t.includes('nangis')) return 'cry';
@@ -329,14 +318,9 @@ async function sendMessage(text) {
   const typing = addTyping();
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(WORKER_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -354,7 +338,6 @@ async function sendMessage(text) {
     const short = reply.length > 65 ? reply.slice(0, 63) + '…' : reply;
     showBubble(short, 5000);
 
-    // emotion-based motion
     const emotion = detectEmotion(reply);
     if (emotion) {
       try { model?.expression(emotion); } catch(e) {}
@@ -376,7 +359,6 @@ async function sendMessage(text) {
 sendBtn.addEventListener('click', () => sendMessage(input.value));
 input.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(input.value); });
 
-// ── LOAD MODEL ──
 async function loadModel() {
   try {
     const Live2DModel = PIXI.live2d.Live2DModel;
@@ -391,7 +373,6 @@ async function loadModel() {
     loadingEl.style.display = 'none';
     model.motion('Idle');
 
-    // greeting
     setTimeout(() => {
       const greet = 'Eh! K-kamu datang! Aku senang sekali... mungkin. 🌿';
       addBubble(greet, 'ai');
