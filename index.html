@@ -230,6 +230,9 @@
 <script>
 const MODEL_URL = 'https://oukaxy2.github.io/hana-v2/huohuo.model3.json';
 
+// ── GANTI DENGAN API KEY KAMU ──
+const CLAUDE_API_KEY = 'sk-ant-GANTI_DENGAN_API_KEY_KAMU';
+
 const loadingEl  = document.getElementById('loading');
 const bubble     = document.getElementById('speech-bubble');
 const messagesEl = document.getElementById('messages');
@@ -258,7 +261,6 @@ let bubbleTimer = null;
 // ── SPEECH BUBBLE ──
 function showBubble(text, ms = 4000) {
   bubble.textContent = text;
-  // position above canvas
   const rect = canvasEl.getBoundingClientRect();
   bubble.style.left = (rect.left + 10) + 'px';
   bubble.style.top  = (rect.top + 20) + 'px';
@@ -329,7 +331,12 @@ async function sendMessage(text) {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
