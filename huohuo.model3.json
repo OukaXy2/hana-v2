@@ -19,19 +19,19 @@
 		],
 		"Motions": {
 			"Idle": [
-				{ "File": "linghun.motion3.json" },
 				{ "File": "Scene1.motion3.json" }
 			],
 			"TapBody": [
-				{ "File": "haoqi.motion3.json" },
-				{ "File": "qizi.motion3.json" }
+				{ "File": "haoqi.motion3.json" }
 			],
 			"TapHead": [
-				{ "File": "yaotou.motion3.json" },
-				{ "File": "zhentou.motion3.json" }
+				{ "File": "yaotou.motion3.json" }
 			],
-			"Sleep": [
-				{ "File": "keshui.motion3.json" }
+			"Special": [
+				{ "File": "linghun.motion3.json" },
+				{ "File": "zhentou.motion3.json" },
+				{ "File": "keshui.motion3.json" },
+				{ "File": "qizi.motion3.json" }
 			]
 		}
 	},
