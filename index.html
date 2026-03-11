@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Live2D</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+  #status { color: white; font-family: sans-serif; font-size: 14px; margin-bottom: 12px; padding: 0 16px; text-align: center; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+
+<div id="status">⏳ Memuat model...</div>
+<canvas id="canvas"></canvas>
+
+<script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@5.3.12/dist/pixi.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
+
+<script>
+const STATUS = document.getElementById('status');
+const W = window.innerWidth;
+const H = window.innerHeight - 60;
+
+const app = new PIXI.Application({
+  view: document.getElementById('canvas'),
+  width: W,
+  height: H,
+  backgroundColor: 0x1a1a2e,
+});
+
+const MODEL_URL = 'https://oukaxy2.github.io/hana-v2/huohuo.model3.json';
+
+async function load() {
+  try {
+    STATUS.textContent = '⏳ Memuat model Huohuo...';
+    const Live2DModel = PIXI.live2d.Live2DModel;
+    const model = await Live2DModel.from(MODEL_URL);
+
+    app.stage.addChild(model);
+
+    const scale = Math.min(W / model.width, H / model.height) * 0.9;
+    model.scale.set(scale);
+    model.x = (W - model.width) / 2;
+    model.y = (H - model.height) / 2;
+
+    STATUS.textContent = '✅ Berhasil! Tap karakter untuk animasi!';
+
+    model.on('hit', (hitAreas) => {
+      model.motion('tap_body');
+    });
+
+  } catch(e) {
+    STATUS.textContent = '❌ Gagal: ' + e.message;
+    console.error(e);
+  }
+}
+
+window.addEventListener('load', () => setTimeout(load, 300));
+</script>
+</body>
+</html>
