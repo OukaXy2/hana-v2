@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Huohuo — Asisten Virtual</title>
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4dd9c0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -26,10 +30,7 @@
       radial-gradient(ellipse at 20% 60%, rgba(77,217,192,0.10) 0%, transparent 50%),
       radial-gradient(ellipse at 50% 100%, rgba(30,60,120,0.25) 0%, transparent 60%);
     pointer-events: none;
-    z-index: 0;
   }
-
-  /* Bintang-bintang */
   body::after {
     content: '';
     position: fixed; inset: 0;
@@ -42,12 +43,9 @@
       radial-gradient(1.5px 1.5px at 85% 10%, rgba(255,255,255,0.8) 0%, transparent 100%),
       radial-gradient(1px 1px at 15% 35%, rgba(255,255,255,0.4) 0%, transparent 100%),
       radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,0.6) 0%, transparent 100%),
-      radial-gradient(1px 1px at 5% 45%, rgba(255,255,255,0.5) 0%, transparent 100%),
       radial-gradient(1.5px 1.5px at 60% 38%, rgba(255,255,255,0.7) 0%, transparent 100%),
-      radial-gradient(1px 1px at 35% 42%, rgba(77,217,192,0.6) 0%, transparent 100%),
-      radial-gradient(1px 1px at 78% 25%, rgba(120,80,255,0.5) 0%, transparent 100%);
+      radial-gradient(1px 1px at 35% 42%, rgba(77,217,192,0.6) 0%, transparent 100%);
     pointer-events: none;
-    z-index: 0;
   }
 
   #canvas {
@@ -65,8 +63,8 @@
     background: rgba(15, 25, 40, 0.92);
     border: 1.5px solid var(--teal);
     border-radius: 10px;
-    padding: 5px 10px;
-    font-size: 10.5px;
+    padding: 8px 12px;
+    font-size: 12px;
     color: #e8f8f5;
     line-height: 1.4;
     box-shadow: 0 4px 24px rgba(77,217,192,0.2);
@@ -78,7 +76,7 @@
     transition: opacity 0.25s, transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275);
     word-break: break-word;
     text-align: center;
-    max-width: 55vw;
+    max-width: 70vw;
   }
   #speech-bubble.visible { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
   #speech-bubble::after {
@@ -130,10 +128,6 @@
   }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
   #chat-header span { font-size: 13px; color: var(--text-soft); font-weight: 600; flex: 1; }
-  #mute-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--text-soft); font-size: 18px; padding: 0 4px;
-  }
 
   #messages {
     flex: 1; overflow-y: auto;
@@ -223,11 +217,6 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   #loading p { color: var(--text-soft); font-size: 14px; font-weight: 600; }
 </style>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4dd9c0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 
@@ -244,7 +233,6 @@
   <div id="chat-header">
     <div class="dot"></div>
     <span>Huohuo sedang online</span>
-    <button id="mute-btn" title="Mute/Unmute">🔊</button>
   </div>
   <div id="messages"></div>
   <div id="input-area">
@@ -261,8 +249,6 @@
 
 <script>
 const MODEL_URL = 'https://oukaxy2.github.io/hana-v2/huohuo.model3.json';
-
-// ── GANTI DENGAN URL WORKER KAMU ──
 const WORKER_URL = 'https://huohuo-assist.mywisnu238.workers.dev';
 
 const loadingEl  = document.getElementById('loading');
@@ -299,15 +285,31 @@ function showBubble(text, ms = 4000) {
   bubbleTimer = setTimeout(() => bubble.classList.remove('visible'), ms);
 }
 
-async function playMotion(name) {
+async function playMotion(name, idx = 0) {
   if (!model || isPlaying) return;
   isPlaying = true;
-  try { await model.motion(name); } catch(e) {}
+  try { await model.motion(name, idx); } catch(e) {}
   setTimeout(() => {
     isPlaying = false;
     try { model.motion('Idle'); } catch(e) {}
   }, 3500);
 }
+
+// Auto rotate idle tiap 8 detik
+const idleMotions = [
+  { name: 'Idle' },
+  { name: 'TapBody' },
+  { name: 'Special', idx: 0 },
+  { name: 'Special', idx: 3 },
+];
+let idleIdx = 0;
+setInterval(() => {
+  if (!isPlaying && model) {
+    const m = idleMotions[idleIdx % idleMotions.length];
+    try { model.motion(m.name, m.idx || 0); } catch(e) {}
+    idleIdx++;
+  }
+}, 8000);
 
 function addBubble(text, role) {
   const div = document.createElement('div');
@@ -325,102 +327,27 @@ function addTyping() {
   return div;
 }
 
-// ── TTS ElevenLabs ──
-let isMuted = false;
-let audioCtx = null;
-
-// Unlock audio context on first user interaction
-function unlockAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-document.addEventListener('click', unlockAudio, { once: true });
-
-async function speak(text) {
-  if (isMuted) return;
-  try {
-    let clean = text.replace(/\*[^*]+\*/g, '').replace(/\s+/g, ' ').trim();
-    if (!clean) return;
-    if (clean.length > 100) {
-      const cut = clean.substring(0, 100);
-      const lastStop = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'), cut.lastIndexOf('…'));
-      clean = lastStop > 40 ? cut.substring(0, lastStop + 1) : cut;
-    }
-    const res = await fetch(WORKER_URL + '/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: clean })
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      showToast('TTS error: ' + res.status + ' ' + err.slice(0,50));
-      return;
-    }
-    const blob = await res.blob();
-    const audioUrl = URL.createObjectURL(blob);
-    // Tampilkan tombol play di pesan terakhir
-    const lastBubble = messagesEl.querySelector('.bubble.ai:last-child');
-    if (lastBubble) {
-      const btn = document.createElement('button');
-      btn.textContent = '🔊 Dengarkan';
-      btn.style.cssText = 'display:block;margin-top:6px;background:none;border:1px solid var(--teal);color:var(--teal);border-radius:99px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:Quicksand,sans-serif;';
-      btn.onclick = () => {
-        const audio = new Audio(audioUrl);
-        audio.play();
-        btn.textContent = '🔊 Memutar...';
-        audio.onended = () => btn.remove();
-      };
-      lastBubble.appendChild(btn);
-    }
-  } catch(e) {
-    showToast('TTS catch: ' + e.message);
-  }
-}
-
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;z-index:999;max-width:90vw;word-break:break-all';
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 5000);
-}
-
-// Mute button
-document.getElementById('mute-btn').addEventListener('click', () => {
-  unlockAudio();
-  isMuted = !isMuted;
-  document.getElementById('mute-btn').textContent = isMuted ? '🔇' : '🔊';
-});
-
-const SYSTEM = `Kamu adalah Huohuo, karakter dari Honkai Star Rail — seorang dukun muda yang canggung, mudah panik, tapi sangat tulus dan perhatian.
-Kamu berbicara dalam Bahasa Indonesia dengan gaya yang sedikit gugup tapi hangat.
-Jawaban singkat maksimal 3 kalimat. Sesekali pakai emoji tapi tidak berlebihan.
-Kalau ditanya sesuatu yang susah, kamu sedikit panik tapi tetap berusaha menjawab.`;
-
-const history = [];
-
 function detectEmotion(text) {
   const t = text.toLowerCase();
   if (t.includes('maaf') || t.includes('sedih') || t.includes('nangis')) return 'cry';
-  if (t.includes('marah') || t.includes('kesal') || t.includes('!!!')) return 'angry';
-  if (t.includes('kaget') || t.includes('hah') || t.includes('??')) return 'baozhen';
+  if (t.includes('marah') || t.includes('kesal')) return 'angry';
+  if (t.includes('kaget') || t.includes('hah')) return 'baozhen';
   if (t.includes('senang') || t.includes('hehe') || t.includes('yay')) return 'qizi1';
   return null;
 }
 
-// Deteksi perintah motion — hanya dari kata perintah eksplisit user/reply
 function detectUserMotion(text) {
   const t = text.toLowerCase();
-  // Harus ada kata kerja perintah yang jelas, bukan kata biasa
-  if (/(joget|dance|nari|goyang dong|joget dong)/.test(t)) return 'Special:3'; // qizi
-  if (/(tidur dong|bobo dong|pura-pura tidur|ngantuk dong)/.test(t)) return 'Special:2'; // keshui
-  if (/(semangat dong|lompat dong|berteriak semangat)/.test(t)) return 'Special:0'; // linghun
-  if (/(geleng|menggeleng|goyang kepala)/.test(t)) return 'TapHead';
-  if (/(melambai|lambaikan tangan|winked)/.test(t)) return 'TapBody';
-  if (/(\*panik\*|\*takut\*|\*gemetar\*)/.test(t)) return 'Special:1'; // zhentou
+  if (/\b(joget|dance|nari|goyang dong|joget dong)\b/.test(t)) return 'Special:3';
+  if (/\b(tidur dong|bobo dong|pura-pura tidur|ngantuk dong)\b/.test(t)) return 'Special:2';
+  if (/\b(semangat dong|lompat dong)\b/.test(t)) return 'Special:0';
+  if (/\b(geleng|menggeleng|goyang kepala)\b/.test(t)) return 'TapHead';
+  if (/\b(melambai|lambaikan tangan)\b/.test(t)) return 'TapBody';
+  if (/\b(\*panik\*|\*takut\*|\*gemetar\*)\b/.test(t)) return 'Special:1';
   return null;
 }
+
+const history = [];
 
 async function sendMessage(text) {
   if (!text.trim()) return;
@@ -438,12 +365,7 @@ async function sendMessage(text) {
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: SYSTEM,
-        messages: history
-      })
+      body: JSON.stringify({ messages: history })
     });
     const data = await res.json();
     const reply = data.content?.[0]?.text || 'E-eh, aku tidak tahu harus bilang apa... 😅';
@@ -454,24 +376,16 @@ async function sendMessage(text) {
 
     const short = reply.length > 65 ? reply.slice(0, 63) + '…' : reply;
     showBubble(short, 5000);
-    speak(reply);
 
     const emotion = detectEmotion(reply);
-    if (emotion) {
-      try { model?.expression(emotion); } catch(e) {}
-    }
+    if (emotion) { try { model?.expression(emotion); } catch(e) {} }
 
-    // Cek motion dari perintah user ATAU dari isi balasan Huohuo
     const userMotion = detectUserMotion(text) || detectUserMotion(reply);
     if (userMotion) {
       const parts = userMotion.split(':');
       setTimeout(() => {
         try {
-          if (parts.length === 2) {
-            model?.motion(parts[0], parseInt(parts[1]));
-          } else {
-            model?.motion(parts[0]);
-          }
+          model?.motion(parts[0], parseInt(parts[1]) || 0);
         } catch(e) {}
       }, 300);
     } else {
@@ -522,7 +436,6 @@ async function loadModel() {
 
 window.addEventListener('load', () => setTimeout(loadModel, 300));
 
-// Register PWA service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
