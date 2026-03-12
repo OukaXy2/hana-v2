@@ -284,8 +284,6 @@ let bubbleTimer = null;
 
 function showBubble(text, ms = 4000) {
   bubble.textContent = text;
-  bubble.style.left = '12px';
-  bubble.style.top  = '12px';
   bubble.classList.add('visible');
   clearTimeout(bubbleTimer);
   bubbleTimer = setTimeout(() => bubble.classList.remove('visible'), ms);
