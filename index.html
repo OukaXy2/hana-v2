@@ -335,10 +335,8 @@ document.addEventListener('click', unlockAudio, { once: true });
 async function speak(text) {
   if (isMuted) return;
   try {
-    // Hapus teks aksi *...* lalu ambil max 100 karakter pertama biar natural & cepat
     let clean = text.replace(/\*[^*]+\*/g, '').replace(/\s+/g, ' ').trim();
     if (!clean) return;
-    // Potong di akhir kalimat terdekat sebelum 100 karakter
     if (clean.length > 100) {
       const cut = clean.substring(0, 100);
       const lastStop = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'), cut.lastIndexOf('…'));
@@ -349,13 +347,28 @@ async function speak(text) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: clean })
     });
+    if (!res.ok) {
+      const err = await res.text();
+      showToast('TTS error: ' + res.status + ' ' + err.slice(0,50));
+      return;
+    }
     const blob = await res.blob();
+    showToast('Audio ok, size: ' + blob.size);
     const audioUrl = URL.createObjectURL(blob);
     const audio = new Audio(audioUrl);
-    audio.play().catch(e => console.warn('Autoplay blocked:', e));
+    const playResult = audio.play();
+    if (playResult) playResult.catch(e => showToast('Play blocked: ' + e.message));
   } catch(e) {
-    console.warn('TTS error:', e);
+    showToast('TTS catch: ' + e.message);
   }
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;z-index:999;max-width:90vw;word-break:break-all';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 5000);
 }
 
 // Mute button
