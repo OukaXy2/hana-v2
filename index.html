@@ -356,8 +356,8 @@ async function sendMessage(text) {
       try { model?.expression(emotion); } catch(e) {}
     }
 
-    // Cek apakah user memerintahkan motion tertentu
-    const userMotion = detectUserMotion(text);
+    // Cek motion dari perintah user ATAU dari isi balasan Huohuo
+    const userMotion = detectUserMotion(text) || detectUserMotion(reply);
     if (userMotion) {
       const parts = userMotion.split(':');
       setTimeout(() => {
