@@ -32,6 +32,7 @@
     bottom: 48%;
     z-index: 5;
     pointer-events: none;
+    max-width: 100vw;
   }
 
   #speech-bubble {
@@ -225,7 +226,7 @@
 const MODEL_URL = 'https://oukaxy2.github.io/hana-v2/huohuo.model3.json';
 
 // ── GANTI DENGAN URL WORKER KAMU ──
-const WORKER_URL = 'https://huohuo-assist.mywisnu238.workers.dev/';
+const WORKER_URL = 'https://huohuo-assist.mywisnu238.workers.dev';
 
 const loadingEl  = document.getElementById('loading');
 const bubble     = document.getElementById('speech-bubble');
@@ -235,8 +236,10 @@ const sendBtn    = document.getElementById('send-btn');
 const canvasEl   = document.getElementById('canvas');
 
 const W = window.innerWidth;
-const CHAR_W = Math.min(W, 380);
-const CHAR_H = Math.round(CHAR_W * 1.4);
+const H = window.innerHeight;
+const availH = Math.round(H * 0.50);
+const CHAR_H = availH;
+const CHAR_W = Math.round(CHAR_H / 1.4);
 
 const app = new PIXI.Application({
   view: canvasEl,
