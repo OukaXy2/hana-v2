@@ -315,28 +315,24 @@ function addTyping() {
   return div;
 }
 
-// ── TTS ──
-function speak(text) {
-  if (!window.speechSynthesis) return;
-  // Hapus teks aksi seperti *panik* sebelum dibaca
-  const clean = text.replace(/\*[^*]+\*/g, '').replace(/\s+/g, ' ').trim();
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(clean);
-  // Cari voice bahasa Indonesia, kalau gak ada pakai default
-  const voices = window.speechSynthesis.getVoices();
-  const idVoice = voices.find(v => v.lang.startsWith('id')) ||
-                  voices.find(v => v.lang.startsWith('ja')) ||
-                  voices[0];
-  if (idVoice) utter.voice = idVoice;
-  utter.lang = 'id-ID';
-  utter.rate = 0.95;
-  utter.pitch = 1.2;
-  utter.volume = 1;
-  window.speechSynthesis.speak(utter);
+// ── TTS ElevenLabs ──
+async function speak(text) {
+  try {
+    const clean = text.replace(/\*[^*]+\*/g, '').replace(/\s+/g, ' ').trim();
+    if (!clean) return;
+    const res = await fetch(WORKER_URL + '/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clean })
+    });
+    const blob = await res.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    const audio = new Audio(audioUrl);
+    audio.play();
+  } catch(e) {
+    console.warn('TTS error:', e);
+  }
 }
-
-// Pastikan voices sudah loaded
-window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 
 const SYSTEM = `Kamu adalah Huohuo, karakter dari Honkai Star Rail — seorang dukun muda yang canggung, mudah panik, tapi sangat tulus dan perhatian.
 Kamu berbicara dalam Bahasa Indonesia dengan gaya yang sedikit gugup tapi hangat.
