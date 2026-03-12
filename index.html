@@ -223,6 +223,11 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   #loading p { color: var(--text-soft); font-size: 14px; font-weight: 600; }
 </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4dd9c0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 
@@ -352,12 +357,14 @@ async function speak(text) {
       showToast('TTS error: ' + res.status + ' ' + err.slice(0,50));
       return;
     }
-    const data = await res.json();
-    showToast('Audio ok, base64 len: ' + data.audio.length);
-    const audioUrl = 'data:audio/mp3;base64,' + data.audio;
-    const audio = new Audio(audioUrl);
-    const playResult = audio.play();
-    if (playResult) playResult.catch(e => showToast('Play blocked: ' + e.message));
+    const arrayBuffer = await res.arrayBuffer();
+    showToast('Audio ok, size: ' + arrayBuffer.byteLength);
+    const audioCtxTTS = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await audioCtxTTS.decodeAudioData(arrayBuffer);
+    const source = audioCtxTTS.createBufferSource();
+    source.buffer = decoded;
+    source.connect(audioCtxTTS.destination);
+    source.start(0);
   } catch(e) {
     showToast('TTS catch: ' + e.message);
   }
@@ -506,6 +513,11 @@ async function loadModel() {
 }
 
 window.addEventListener('load', () => setTimeout(loadModel, 300));
+
+// Register PWA service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,23 @@
+{
+  "name": "Huohuo — Asisten Virtual",
+  "short_name": "Huohuo",
+  "description": "Asisten virtual Huohuo dari Honkai Star Rail",
+  "start_url": "/hana-v2/",
+  "scope": "/hana-v2/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1520",
+  "theme_color": "#4dd9c0",
+  "icons": [
+    {
+      "src": "https://oukaxy2.github.io/hana-v2/huohuo.8192/texture_00.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://oukaxy2.github.io/hana-v2/huohuo.8192/texture_00.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
