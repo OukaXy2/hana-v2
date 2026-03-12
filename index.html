@@ -64,21 +64,21 @@
     z-index: 20;
     background: rgba(15, 25, 40, 0.92);
     border: 1.5px solid var(--teal);
-    border-radius: 16px;
-    padding: 8px 12px;
-    font-size: 12px;
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 10.5px;
     color: #e8f8f5;
-    line-height: 1.5;
-    box-shadow: 0 4px 24px rgba(77,217,192,0.2), inset 0 0 20px rgba(77,217,192,0.04);
+    line-height: 1.4;
+    box-shadow: 0 4px 24px rgba(77,217,192,0.2);
     pointer-events: none;
     opacity: 0;
-    bottom: calc(48% + 8px);
+    bottom: calc(48% + 6px);
     left: 50%;
     transform: translateX(-50%) scale(0.8) translateY(8px);
     transition: opacity 0.25s, transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275);
     word-break: break-word;
     text-align: center;
-    max-width: 70vw;
+    max-width: 55vw;
   }
   #speech-bubble.visible { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
   #speech-bubble::after {
@@ -315,6 +315,29 @@ function addTyping() {
   return div;
 }
 
+// ── TTS ──
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  // Hapus teks aksi seperti *panik* sebelum dibaca
+  const clean = text.replace(/\*[^*]+\*/g, '').replace(/\s+/g, ' ').trim();
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(clean);
+  // Cari voice bahasa Indonesia, kalau gak ada pakai default
+  const voices = window.speechSynthesis.getVoices();
+  const idVoice = voices.find(v => v.lang.startsWith('id')) ||
+                  voices.find(v => v.lang.startsWith('ja')) ||
+                  voices[0];
+  if (idVoice) utter.voice = idVoice;
+  utter.lang = 'id-ID';
+  utter.rate = 0.95;
+  utter.pitch = 1.2;
+  utter.volume = 1;
+  window.speechSynthesis.speak(utter);
+}
+
+// Pastikan voices sudah loaded
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
 const SYSTEM = `Kamu adalah Huohuo, karakter dari Honkai Star Rail — seorang dukun muda yang canggung, mudah panik, tapi sangat tulus dan perhatian.
 Kamu berbicara dalam Bahasa Indonesia dengan gaya yang sedikit gugup tapi hangat.
 Jawaban singkat maksimal 3 kalimat. Sesekali pakai emoji tapi tidak berlebihan.
@@ -376,6 +399,7 @@ async function sendMessage(text) {
 
     const short = reply.length > 65 ? reply.slice(0, 63) + '…' : reply;
     showBubble(short, 5000);
+    speak(reply);
 
     const emotion = detectEmotion(reply);
     if (emotion) {
