@@ -257,9 +257,8 @@ let bubbleTimer = null;
 
 function showBubble(text, ms = 4000) {
   bubble.textContent = text;
-  const rect = canvasEl.getBoundingClientRect();
-  bubble.style.left = (rect.left + 10) + 'px';
-  bubble.style.top  = (rect.top + 20) + 'px';
+  bubble.style.left = '12px';
+  bubble.style.top  = '12px';
   bubble.classList.add('visible');
   clearTimeout(bubbleTimer);
   bubbleTimer = setTimeout(() => bubble.classList.remove('visible'), ms);
@@ -307,6 +306,18 @@ function detectEmotion(text) {
   return null;
 }
 
+// Deteksi perintah motion dari user
+function detectUserMotion(text) {
+  const t = text.toLowerCase();
+  if (t.includes('goyang') || t.includes('dance') || t.includes('nari') || t.includes('joget')) return 'Special:2'; // qizi
+  if (t.includes('tidur') || t.includes('ngantuk') || t.includes('bobo')) return 'Special:2'; // keshui
+  if (t.includes('semangat') || t.includes('lompat') || t.includes('yeay') || t.includes('hore')) return 'Special:0'; // linghun
+  if (t.includes('geleng') || t.includes('goyang kepala') || t.includes('menggeleng')) return 'TapHead';
+  if (t.includes('melambai') || t.includes('winked') || t.includes('lambaikan') || t.includes('hai') || t.includes('halo')) return 'TapBody';
+  if (t.includes('panik') || t.includes('takut') || t.includes('tolong')) return 'Special:1'; // zhentou
+  return null;
+}
+
 async function sendMessage(text) {
   if (!text.trim()) return;
   input.value = '';
@@ -345,7 +356,23 @@ async function sendMessage(text) {
     if (emotion) {
       try { model?.expression(emotion); } catch(e) {}
     }
-    setTimeout(() => playMotion('TapBody'), 300);
+
+    // Cek apakah user memerintahkan motion tertentu
+    const userMotion = detectUserMotion(text);
+    if (userMotion) {
+      const parts = userMotion.split(':');
+      setTimeout(() => {
+        try {
+          if (parts.length === 2) {
+            model?.motion(parts[0], parseInt(parts[1]));
+          } else {
+            model?.motion(parts[0]);
+          }
+        } catch(e) {}
+      }, 300);
+    } else {
+      setTimeout(() => playMotion('TapBody'), 300);
+    }
 
   } catch(err) {
     typing.remove();
