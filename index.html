@@ -129,7 +129,11 @@
     border-radius: 50%; animation: pulse 2s infinite;
   }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-  #chat-header span { font-size: 13px; color: var(--text-soft); font-weight: 600; }
+  #chat-header span { font-size: 13px; color: var(--text-soft); font-weight: 600; flex: 1; }
+  #mute-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-soft); font-size: 18px; padding: 0 4px;
+  }
 
   #messages {
     flex: 1; overflow-y: auto;
@@ -235,6 +239,7 @@
   <div id="chat-header">
     <div class="dot"></div>
     <span>Huohuo sedang online</span>
+    <button id="mute-btn" title="Mute/Unmute">🔊</button>
   </div>
   <div id="messages"></div>
   <div id="input-area">
@@ -316,10 +321,29 @@ function addTyping() {
 }
 
 // ── TTS ElevenLabs ──
+let isMuted = false;
+let audioCtx = null;
+
+// Unlock audio context on first user interaction
+function unlockAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+document.addEventListener('click', unlockAudio, { once: true });
+
 async function speak(text) {
+  if (isMuted) return;
   try {
-    const clean = text.replace(/\*[^*]+\*/g, '').replace(/\s+/g, ' ').trim();
+    // Hapus teks aksi *...* lalu ambil max 100 karakter pertama biar natural & cepat
+    let clean = text.replace(/\*[^*]+\*/g, '').replace(/\s+/g, ' ').trim();
     if (!clean) return;
+    // Potong di akhir kalimat terdekat sebelum 100 karakter
+    if (clean.length > 100) {
+      const cut = clean.substring(0, 100);
+      const lastStop = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'), cut.lastIndexOf('…'));
+      clean = lastStop > 40 ? cut.substring(0, lastStop + 1) : cut;
+    }
     const res = await fetch(WORKER_URL + '/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -328,11 +352,18 @@ async function speak(text) {
     const blob = await res.blob();
     const audioUrl = URL.createObjectURL(blob);
     const audio = new Audio(audioUrl);
-    audio.play();
+    audio.play().catch(e => console.warn('Autoplay blocked:', e));
   } catch(e) {
     console.warn('TTS error:', e);
   }
 }
+
+// Mute button
+document.getElementById('mute-btn').addEventListener('click', () => {
+  unlockAudio();
+  isMuted = !isMuted;
+  document.getElementById('mute-btn').textContent = isMuted ? '🔇' : '🔊';
+});
 
 const SYSTEM = `Kamu adalah Huohuo, karakter dari Honkai Star Rail — seorang dukun muda yang canggung, mudah panik, tapi sangat tulus dan perhatian.
 Kamu berbicara dalam Bahasa Indonesia dengan gaya yang sedikit gugup tapi hangat.
