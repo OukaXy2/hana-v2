@@ -352,9 +352,9 @@ async function speak(text) {
       showToast('TTS error: ' + res.status + ' ' + err.slice(0,50));
       return;
     }
-    const blob = await res.blob();
-    showToast('Audio ok, size: ' + blob.size);
-    const audioUrl = URL.createObjectURL(blob);
+    const data = await res.json();
+    showToast('Audio ok, base64 len: ' + data.audio.length);
+    const audioUrl = 'data:audio/mp3;base64,' + data.audio;
     const audio = new Audio(audioUrl);
     const playResult = audio.play();
     if (playResult) playResult.catch(e => showToast('Play blocked: ' + e.message));
