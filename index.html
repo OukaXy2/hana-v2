@@ -357,14 +357,13 @@ async function speak(text) {
       showToast('TTS error: ' + res.status + ' ' + err.slice(0,50));
       return;
     }
-    const arrayBuffer = await res.arrayBuffer();
-    showToast('Audio ok, size: ' + arrayBuffer.byteLength);
-    const audioCtxTTS = new (window.AudioContext || window.webkitAudioContext)();
-    const decoded = await audioCtxTTS.decodeAudioData(arrayBuffer);
-    const source = audioCtxTTS.createBufferSource();
-    source.buffer = decoded;
-    source.connect(audioCtxTTS.destination);
-    source.start(0);
+    const blob = await res.blob();
+    showToast('Audio ok, size: ' + blob.size + ' type: ' + blob.type);
+    const audioUrl = URL.createObjectURL(blob);
+    const audio = new Audio(audioUrl);
+    audio.addEventListener('ended', () => URL.revokeObjectURL(audioUrl));
+    const playResult = audio.play();
+    if (playResult) playResult.catch(e => showToast('Play err: ' + e.message));
   } catch(e) {
     showToast('TTS catch: ' + e.message);
   }
