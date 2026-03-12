@@ -358,12 +358,21 @@ async function speak(text) {
       return;
     }
     const blob = await res.blob();
-    showToast('Audio ok, size: ' + blob.size + ' type: ' + blob.type);
     const audioUrl = URL.createObjectURL(blob);
-    const audio = new Audio(audioUrl);
-    audio.addEventListener('ended', () => URL.revokeObjectURL(audioUrl));
-    const playResult = audio.play();
-    if (playResult) playResult.catch(e => showToast('Play err: ' + e.message));
+    // Tampilkan tombol play di pesan terakhir
+    const lastBubble = messagesEl.querySelector('.bubble.ai:last-child');
+    if (lastBubble) {
+      const btn = document.createElement('button');
+      btn.textContent = '🔊 Dengarkan';
+      btn.style.cssText = 'display:block;margin-top:6px;background:none;border:1px solid var(--teal);color:var(--teal);border-radius:99px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:Quicksand,sans-serif;';
+      btn.onclick = () => {
+        const audio = new Audio(audioUrl);
+        audio.play();
+        btn.textContent = '🔊 Memutar...';
+        audio.onended = () => btn.remove();
+      };
+      lastBubble.appendChild(btn);
+    }
   } catch(e) {
     showToast('TTS catch: ' + e.message);
   }
