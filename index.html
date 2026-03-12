@@ -65,25 +65,20 @@
     background: rgba(15, 25, 40, 0.92);
     border: 1.5px solid var(--teal);
     border-radius: 16px;
-    padding: 10px 14px;
-    font-size: 13px;
+    padding: 8px 12px;
+    font-size: 12px;
     color: #e8f8f5;
-    max-width: 220px;
     line-height: 1.5;
     box-shadow: 0 4px 24px rgba(77,217,192,0.2), inset 0 0 20px rgba(77,217,192,0.04);
     pointer-events: none;
     opacity: 0;
-    /* Posisi bawah karakter, di atas chat panel */
-    bottom: calc(48% + 12px);
+    bottom: calc(48% + 8px);
     left: 50%;
     transform: translateX(-50%) scale(0.8) translateY(8px);
     transition: opacity 0.25s, transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275);
     word-break: break-word;
     text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 80vw;
+    max-width: 70vw;
   }
   #speech-bubble.visible { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
   #speech-bubble::after {
@@ -338,15 +333,16 @@ function detectEmotion(text) {
   return null;
 }
 
-// Deteksi perintah motion dari user
+// Deteksi perintah motion — hanya dari kata perintah eksplisit user/reply
 function detectUserMotion(text) {
   const t = text.toLowerCase();
-  if (t.includes('goyang') || t.includes('dance') || t.includes('nari') || t.includes('joget')) return 'Special:2'; // qizi
-  if (t.includes('tidur') || t.includes('ngantuk') || t.includes('bobo')) return 'Special:2'; // keshui
-  if (t.includes('semangat') || t.includes('lompat') || t.includes('yeay') || t.includes('hore')) return 'Special:0'; // linghun
-  if (t.includes('geleng') || t.includes('goyang kepala') || t.includes('menggeleng')) return 'TapHead';
-  if (t.includes('melambai') || t.includes('winked') || t.includes('lambaikan') || t.includes('hai') || t.includes('halo')) return 'TapBody';
-  if (t.includes('panik') || t.includes('takut') || t.includes('tolong')) return 'Special:1'; // zhentou
+  // Harus ada kata kerja perintah yang jelas, bukan kata biasa
+  if (/(joget|dance|nari|goyang dong|joget dong)/.test(t)) return 'Special:3'; // qizi
+  if (/(tidur dong|bobo dong|pura-pura tidur|ngantuk dong)/.test(t)) return 'Special:2'; // keshui
+  if (/(semangat dong|lompat dong|berteriak semangat)/.test(t)) return 'Special:0'; // linghun
+  if (/(geleng|menggeleng|goyang kepala)/.test(t)) return 'TapHead';
+  if (/(melambai|lambaikan tangan|winked)/.test(t)) return 'TapBody';
+  if (/(\*panik\*|\*takut\*|\*gemetar\*)/.test(t)) return 'Special:1'; // zhentou
   return null;
 }
 
